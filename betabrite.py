@@ -15,6 +15,30 @@ import urllib
 import traceback
 import unicodedata
 import signal
+from homeassistant.components.discovery import SERVICE_BETABRITE
+from homeassistant.helpers import discovery
+
+DOMAIN = 'betabright'
+
+DEPENDENCIES = ['http']
+
+def setup(hass, config):
+    cfg = config.get(DOMAIN)
+
+    def device_discovered(service, info):
+        # Called when betabrite device has been discovered.
+        print("Discovered new BetaBrite device: {}".format(info))
+
+    discovery.listen(hass, SERVICE_BETABRITE, device_discovered)
+    return True
+
+
+# Put in discovery.py
+SERVICE_BETABRITE = 'betabrite'
+SERVICE_HANDLERS = {
+    # ...
+    SERVICE_BETABRITE: ('betabrite', None),
+}
 
 # GLOBALS
 
@@ -23,69 +47,6 @@ twitterApi = None
 class preferences:
     pass
 
-#-------------------------------------------------------------------------------
-#   T W I T T E R   S T U F F
-#-------------------------------------------------------------------------------
-
-def twitterInit():
-    global twitterApi
-    global preferences
-    config = ConfigParser.RawConfigParser()
-    config.read('settings.cfg')
-    # http://dev.twitter.com/apps/myappid
-    # http://dev.twitter.com/apps/myappid/my_token
-    CONSUMER_KEY = config.get('Twitter OAuth', 'CONSUMER_KEY')
-    CONSUMER_SECRET = config.get('Twitter OAuth', 'CONSUMER_SECRET')
-    ACCESS_TOKEN_KEY = config.get('Twitter OAuth', 'ACCESS_TOKEN_KEY')
-    ACCESS_TOKEN_SECRET = config.get('Twitter OAuth', 'ACCESS_TOKEN_SECRET')
-    preferences.twitter_user = config.get('preferences', 'twitter.user')
-    preferences.twitter_mine_count = int(config.get('preferences', 'twitter.mine.count'))
-    preferences.twitter_mine_delay = float(config.get('preferences', 'twitter.mine.delay'))
-    preferences.twitter_peer_count = int(config.get('preferences', 'twitter.peer.count'))
-    preferences.twitter_peer_delay = float(config.get('preferences', 'twitter.peer.delay'))
-
-    twitterAuth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    twitterAuth.set_access_token(ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET)
-    twitterApi = tweepy.API(twitterAuth, secure=True)
-
-def twitterGetUserTweets(i):
-    global twitterApi
-    global preferences
-    twitterUserObj = twitterApi.get_user(preferences.twitter_user)
-    return twitterApi.user_timeline(screen_name=preferences.twitter_user, include_rts=True, count=i)
-
-def twitterGetHomeTweets(i):
-    global twitterApi
-    global preferences
-    twitterUserObj = twitterApi.get_user(preferences.twitter_user)
-    return  twitterApi.home_timeline(screen_name=preferences.twitter_user, include_rts=True, count=i)
-
-    # Display basic details for twitter user name
-    ## print (" ")
-    ## print ("Basic information for", twitterUserObj.name)
-    ## print ("Screen Name:", twitterUserObj.screen_name)
-    ## print ("Name: ", twitterUserObj.name)
-    ## print ("Twitter Unique ID: ", twitterUserObj.id)
-    ## print ("Account created at: ", twitterUserObj.created_at)
-
-        # print ("ID:", tweet.id)
-        # print ("User ID:", tweet.user.id)
-        # print ("Text:", tweet.text)
-        # print ("Created:", tweet.created_at)
-        # print ("Geo:", tweet.geo)
-        # print ("Contributors:", tweet.contributors)
-        # print ("Coordinates:", tweet.coordinates)
-        # print ("Favorited:", tweet.favorited)
-        # print ("In reply to screen name:", tweet.in_reply_to_screen_name)
-        # print ("In reply to status ID:", tweet.in_reply_to_status_id)
-        # print ("In reply to status ID str:", tweet.in_reply_to_status_id_str)
-        # print ("In reply to user ID:", tweet.in_reply_to_user_id)
-        # print ("In reply to user ID str:", tweet.in_reply_to_user_id_str)
-        # print ("Place:", tweet.place)
-        # print ("Retweeted:", tweet.retweeted)
-        # print ("Retweet count:", tweet.retweet_count)
-        # print ("Source:", tweet.source)
-        # print ("Truncated:", tweet.truncated)
 
 #-------------------------------------------------------------------------------
 #   B E T A   B R I T E   S T U F F
@@ -232,6 +193,70 @@ def displayFeedback(msgType,detail):
     logTime=datetime.datetime.now().strftime('%H:%M:%S')
     print(logTime+' '+msgType+" >> "+detail)
 
+
+#-------------------------------------------------------------------------------
+#   T W I T T E R   S T U F F
+#-------------------------------------------------------------------------------
+
+def twitterInit():
+    global twitterApi
+    global preferences
+    config = ConfigParser.RawConfigParser()
+    config.read('settings.cfg')
+    # http://dev.twitter.com/apps/myappid
+    # http://dev.twitter.com/apps/myappid/my_token
+    CONSUMER_KEY = config.get('Twitter OAuth', 'CONSUMER_KEY')
+    CONSUMER_SECRET = config.get('Twitter OAuth', 'CONSUMER_SECRET')
+    ACCESS_TOKEN_KEY = config.get('Twitter OAuth', 'ACCESS_TOKEN_KEY')
+    ACCESS_TOKEN_SECRET = config.get('Twitter OAuth', 'ACCESS_TOKEN_SECRET')
+    preferences.twitter_user = config.get('preferences', 'twitter.user')
+    preferences.twitter_mine_count = int(config.get('preferences', 'twitter.mine.count'))
+    preferences.twitter_mine_delay = float(config.get('preferences', 'twitter.mine.delay'))
+    preferences.twitter_peer_count = int(config.get('preferences', 'twitter.peer.count'))
+    preferences.twitter_peer_delay = float(config.get('preferences', 'twitter.peer.delay'))
+
+    twitterAuth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    twitterAuth.set_access_token(ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET)
+    twitterApi = tweepy.API(twitterAuth, secure=True)
+
+def twitterGetUserTweets(i):
+    global twitterApi
+    global preferences
+    twitterUserObj = twitterApi.get_user(preferences.twitter_user)
+    return twitterApi.user_timeline(screen_name=preferences.twitter_user, include_rts=True, count=i)
+
+def twitterGetHomeTweets(i):
+    global twitterApi
+    global preferences
+    twitterUserObj = twitterApi.get_user(preferences.twitter_user)
+    return  twitterApi.home_timeline(screen_name=preferences.twitter_user, include_rts=True, count=i)
+
+    # Display basic details for twitter user name
+    ## print (" ")
+    ## print ("Basic information for", twitterUserObj.name)
+    ## print ("Screen Name:", twitterUserObj.screen_name)
+    ## print ("Name: ", twitterUserObj.name)
+    ## print ("Twitter Unique ID: ", twitterUserObj.id)
+    ## print ("Account created at: ", twitterUserObj.created_at)
+
+        # print ("ID:", tweet.id)
+        # print ("User ID:", tweet.user.id)
+        # print ("Text:", tweet.text)
+        # print ("Created:", tweet.created_at)
+        # print ("Geo:", tweet.geo)
+        # print ("Contributors:", tweet.contributors)
+        # print ("Coordinates:", tweet.coordinates)
+        # print ("Favorited:", tweet.favorited)
+        # print ("In reply to screen name:", tweet.in_reply_to_screen_name)
+        # print ("In reply to status ID:", tweet.in_reply_to_status_id)
+        # print ("In reply to status ID str:", tweet.in_reply_to_status_id_str)
+        # print ("In reply to user ID:", tweet.in_reply_to_user_id)
+        # print ("In reply to user ID str:", tweet.in_reply_to_user_id_str)
+        # print ("Place:", tweet.place)
+        # print ("Retweeted:", tweet.retweeted)
+        # print ("Retweet count:", tweet.retweet_count)
+        # print ("Source:", tweet.source)
+        # print ("Truncated:", tweet.truncated)
 #-------------------------------------------------------------------------------
 #   M A I N   L O O P
 #-------------------------------------------------------------------------------
